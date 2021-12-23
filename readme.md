@@ -29,7 +29,7 @@ knask i32 str \
 Non-final strings must be null-terminated.
 
 ```bash
-knask str str str 67 97 115 0, 76 117 110 97 0, 83,104,101,114,108,111,99,107
+knask str str str 67 97 115 0, 76 117 110 97 0, 83 104 101 114 108 111 99 107
 
 # prints
 str: Cas
