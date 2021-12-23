@@ -18,9 +18,7 @@ ParseArgs tokenise_args(std::string arg_str) {
   // collect specs
   while (pos < len) {
     std::string_view remaining {&arg_str.at(pos)};
-    if (is_numeric(remaining[0])) {
-      break;
-    } else if (remaining.compare(0, 2, "u8") == 0) {
+    if (remaining.compare(0, 2, "u8") == 0) {
       specs.push_back(Spec::u8);
       pos += 2;
     } else if (remaining.compare(0, 3, "u16") == 0) {
@@ -53,15 +51,8 @@ ParseArgs tokenise_args(std::string arg_str) {
     } else if (remaining.compare(0, 3, "str") == 0) {
       specs.push_back(Spec::str);
       pos += 3;
-    } else {
-      pos++;
-    }
-  }
-
-  // collect bytes to parse
-  while (pos < len) {
-    std::string_view remaining {&arg_str.at(pos)};
-    if (is_numeric(arg_str[pos])) {
+    } else if (is_numeric(remaining[0])) {
+      // TODO: error handling if number is greater than 255
       uint64_t start {pos};
       while (pos < len && is_numeric(arg_str[pos])) {
         pos++;
@@ -81,8 +72,9 @@ std::vector<Parsed> parse(ParseArgs args) {
   std::vector<Parsed> parsed {};
   uint64_t byte_pos {0};
 
-  for (uint64_t spec_pos {0}; spec_pos < args.specs.size(); spec_pos++) {
-    switch (args.specs[spec_pos]) {
+  // TODO: I’m not checking that there are enough bytes remaining for each spec.
+  for (auto spec : args.specs) {
+    switch (spec) {
     case Spec::u8: {
       parsed.emplace_back(bytes::u8_from_be(&args.bytes.at(byte_pos)));
       byte_pos++;
