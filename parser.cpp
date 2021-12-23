@@ -1,7 +1,8 @@
 #include "parser.h"
+#include "bytes.h"
 #include <charconv>
 #include <cstdint>
-#include <cstring>
+
 #include <vector>
 
 namespace parser {
@@ -83,95 +84,71 @@ std::vector<Parsed> parse(ParseArgs args) {
   for (uint64_t spec_pos {0}; spec_pos < args.specs.size(); spec_pos++) {
     switch (args.specs[spec_pos]) {
     case Spec::u8: {
-      parsed.emplace_back(static_cast<uint8_t>(args.bytes[byte_pos]));
+      parsed.emplace_back(bytes::u8_from_be(&args.bytes.at(byte_pos)));
       byte_pos++;
       break;
     }
     case Spec::u16: {
-      uint16_t value;
-      std::byte bytes[2] {args.bytes[byte_pos + 1], args.bytes[byte_pos]};
-      std::memcpy(&value, bytes, sizeof(value));
-      parsed.emplace_back(value);
+      parsed.emplace_back(bytes::u16_from_be(&args.bytes.at(byte_pos)));
       byte_pos += 2;
       break;
     }
     case Spec::u32: {
-      uint32_t value;
-      std::byte bytes[4] {args.bytes[byte_pos + 3], args.bytes[byte_pos + 2],
-                          args.bytes[byte_pos + 1], args.bytes[byte_pos]};
-      std::memcpy(&value, bytes, sizeof(value));
-      parsed.emplace_back(value);
+      parsed.emplace_back(bytes::u32_from_be(&args.bytes.at(byte_pos)));
       byte_pos += 4;
       break;
     }
     case Spec::u64: {
-      uint64_t value;
-      std::byte bytes[8] {args.bytes[byte_pos + 7], args.bytes[byte_pos + 6],
-                          args.bytes[byte_pos + 5], args.bytes[byte_pos + 4],
-                          args.bytes[byte_pos + 3], args.bytes[byte_pos + 2],
-                          args.bytes[byte_pos + 1], args.bytes[byte_pos]};
-      std::memcpy(&value, bytes, sizeof(value));
-      parsed.emplace_back(value);
+      parsed.emplace_back(bytes::u64_from_be(&args.bytes.at(byte_pos)));
       byte_pos += 8;
       break;
     }
     case Spec::i8: {
-      parsed.emplace_back(static_cast<int8_t>(args.bytes[byte_pos]));
+      parsed.emplace_back(bytes::i8_from_be(&args.bytes.at(byte_pos)));
       byte_pos++;
       break;
     }
     case Spec::i16: {
-      int16_t value;
-      std::byte bytes[2] {args.bytes[byte_pos + 1], args.bytes[byte_pos]};
-      std::memcpy(&value, bytes, sizeof(value));
-      parsed.emplace_back(value);
+      parsed.emplace_back(bytes::i16_from_be(&args.bytes.at(byte_pos)));
       byte_pos += 2;
       break;
     }
     case Spec::i32: {
-      int32_t value;
-      std::byte bytes[4] {args.bytes[byte_pos + 3], args.bytes[byte_pos + 2],
-                          args.bytes[byte_pos + 1], args.bytes[byte_pos]};
-      std::memcpy(&value, bytes, sizeof(value));
-      parsed.emplace_back(value);
+      parsed.emplace_back(bytes::i32_from_be(&args.bytes.at(byte_pos)));
       byte_pos += 4;
       break;
     }
     case Spec::i64: {
-      int64_t value;
-      std::byte bytes[8] {args.bytes[byte_pos + 7], args.bytes[byte_pos + 6],
-                          args.bytes[byte_pos + 5], args.bytes[byte_pos + 4],
-                          args.bytes[byte_pos + 3], args.bytes[byte_pos + 2],
-                          args.bytes[byte_pos + 1], args.bytes[byte_pos]};
-      std::memcpy(&value, bytes, sizeof(value));
-      parsed.emplace_back(value);
+      parsed.emplace_back(bytes::i64_from_be(&args.bytes.at(byte_pos)));
       byte_pos += 8;
       break;
     }
     case Spec::f32: {
-      float value;
-      std::byte bytes[4] {args.bytes[byte_pos + 3], args.bytes[byte_pos + 2],
-                          args.bytes[byte_pos + 1], args.bytes[byte_pos]};
-      std::memcpy(&value, bytes, sizeof(value));
-      parsed.emplace_back(value);
+      parsed.emplace_back(bytes::f32_from_be(&args.bytes.at(byte_pos)));
       byte_pos += 4;
       break;
     }
     case Spec::f64: {
-      double value;
-      std::byte bytes[8] {args.bytes[byte_pos + 7], args.bytes[byte_pos + 6],
-                          args.bytes[byte_pos + 5], args.bytes[byte_pos + 4],
-                          args.bytes[byte_pos + 3], args.bytes[byte_pos + 2],
-                          args.bytes[byte_pos + 1], args.bytes[byte_pos]};
-      std::memcpy(&value, bytes, sizeof(value));
-      parsed.emplace_back(value);
+      parsed.emplace_back(bytes::f64_from_be(&args.bytes.at(byte_pos)));
       byte_pos += 8;
       break;
     }
     case Spec::str:
+      std::vector<char> s {};
+      while (byte_pos < args.bytes.size() &&
+             args.bytes[byte_pos] != std::byte {0}) {
+        s.push_back(static_cast<char>(args.bytes[byte_pos]));
+        byte_pos++;
+      }
+      // consume null
+      byte_pos++;
+      s.push_back(0x00);
+
+      parsed.emplace_back(std::string {s.data()});
       break;
     }
   }
   return parsed;
 }
+
 } // namespace parser
